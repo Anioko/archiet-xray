@@ -2,7 +2,5 @@ __pycache__/
 .archiet/
 *.egg-info/
 dist/
-.pytest_cache/
 build/
-dist/
-*.egg-info/
+.pytest_cache/
