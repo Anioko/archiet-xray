@@ -1,0 +1,473 @@
+{
+  "xray_version": "0.1.1",
+  "repo": "full-stack-fastapi-template",
+  "stats": {
+    "code_files": 141,
+    "parsed_files": 141,
+    "mapped_files": 6,
+    "unmapped_files": 0,
+    "routes": 23,
+    "entities": 11,
+    "tasks": 0,
+    "graph_edges": 1
+  },
+  "score": 82,
+  "modules": [
+    "backend",
+    "frontend",
+    "hooks",
+    "scripts"
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "methods": [
+        "GET"
+      ],
+      "handler": "read_items",
+      "file": "backend/app/api/routes/items.py",
+      "line": 14,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/",
+      "methods": [
+        "POST"
+      ],
+      "handler": "create_item",
+      "file": "backend/app/api/routes/items.py",
+      "line": 62,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/",
+      "methods": [
+        "GET"
+      ],
+      "handler": "read_users",
+      "file": "backend/app/api/routes/users.py",
+      "line": 37,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/",
+      "methods": [
+        "POST"
+      ],
+      "handler": "create_user",
+      "file": "backend/app/api/routes/users.py",
+      "line": 57,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/health-check/",
+      "methods": [
+        "GET"
+      ],
+      "handler": "health_check",
+      "file": "backend/app/api/routes/utils.py",
+      "line": 30,
+      "framework": "fastapi",
+      "auth": null
+    },
+    {
+      "path": "/login/access-token",
+      "methods": [
+        "POST"
+      ],
+      "handler": "login_access_token",
+      "file": "backend/app/api/routes/login.py",
+      "line": 24,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/login/test-token",
+      "methods": [
+        "POST"
+      ],
+      "handler": "test_token",
+      "file": "backend/app/api/routes/login.py",
+      "line": 46,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/me",
+      "methods": [
+        "PATCH"
+      ],
+      "handler": "update_user_me",
+      "file": "backend/app/api/routes/users.py",
+      "line": 82,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/me",
+      "methods": [
+        "GET"
+      ],
+      "handler": "read_user_me",
+      "file": "backend/app/api/routes/users.py",
+      "line": 125,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/me",
+      "methods": [
+        "DELETE"
+      ],
+      "handler": "delete_user_me",
+      "file": "backend/app/api/routes/users.py",
+      "line": 133,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/me/password",
+      "methods": [
+        "PATCH"
+      ],
+      "handler": "update_password_me",
+      "file": "backend/app/api/routes/users.py",
+      "line": 104,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/password-recovery-html-content/{email}",
+      "methods": [
+        "POST"
+      ],
+      "handler": "recover_password_html_content",
+      "file": "backend/app/api/routes/login.py",
+      "line": 105,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/password-recovery/{email}",
+      "methods": [
+        "POST"
+      ],
+      "handler": "recover_password",
+      "file": "backend/app/api/routes/login.py",
+      "line": 54,
+      "framework": "fastapi",
+      "auth": null
+    },
+    {
+      "path": "/reset-password/",
+      "methods": [
+        "POST"
+      ],
+      "handler": "reset_password",
+      "file": "backend/app/api/routes/login.py",
+      "line": 78,
+      "framework": "fastapi",
+      "auth": null
+    },
+    {
+      "path": "/signup",
+      "methods": [
+        "POST"
+      ],
+      "handler": "register_user",
+      "file": "backend/app/api/routes/users.py",
+      "line": 147,
+      "framework": "fastapi",
+      "auth": null
+    },
+    {
+      "path": "/test-email/",
+      "methods": [
+        "POST"
+      ],
+      "handler": "test_email",
+      "file": "backend/app/api/routes/utils.py",
+      "line": 16,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/users/",
+      "methods": [
+        "POST"
+      ],
+      "handler": "create_user",
+      "file": "backend/app/api/routes/private.py",
+      "line": 24,
+      "framework": "fastapi",
+      "auth": null
+    },
+    {
+      "path": "/{id}",
+      "methods": [
+        "GET"
+      ],
+      "handler": "read_item",
+      "file": "backend/app/api/routes/items.py",
+      "line": 49,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/{id}",
+      "methods": [
+        "PUT"
+      ],
+      "handler": "update_item",
+      "file": "backend/app/api/routes/items.py",
+      "line": 76,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/{id}",
+      "methods": [
+        "DELETE"
+      ],
+      "handler": "delete_item",
+      "file": "backend/app/api/routes/items.py",
+      "line": 100,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/{user_id}",
+      "methods": [
+        "GET"
+      ],
+      "handler": "read_user_by_id",
+      "file": "backend/app/api/routes/users.py",
+      "line": 163,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/{user_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "handler": "update_user",
+      "file": "backend/app/api/routes/users.py",
+      "line": 187,
+      "framework": "fastapi",
+      "auth": true
+    },
+    {
+      "path": "/{user_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "handler": "delete_user",
+      "file": "backend/app/api/routes/users.py",
+      "line": 215,
+      "framework": "fastapi",
+      "auth": true
+    }
+  ],
+  "entities": [
+    {
+      "name": "ItemBase",
+      "file": "backend/app/models.py",
+      "line": 71,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "relations": []
+    },
+    {
+      "name": "ItemsPublic",
+      "file": "backend/app/models.py",
+      "line": 106,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "data",
+        "count"
+      ],
+      "relations": []
+    },
+    {
+      "name": "Message",
+      "file": "backend/app/models.py",
+      "line": 112,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "message"
+      ],
+      "relations": []
+    },
+    {
+      "name": "NewPassword",
+      "file": "backend/app/models.py",
+      "line": 127,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "token",
+        "new_password"
+      ],
+      "relations": []
+    },
+    {
+      "name": "Token",
+      "file": "backend/app/models.py",
+      "line": 117,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "access_token",
+        "token_type"
+      ],
+      "relations": []
+    },
+    {
+      "name": "TokenPayload",
+      "file": "backend/app/models.py",
+      "line": 123,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "sub"
+      ],
+      "relations": []
+    },
+    {
+      "name": "UpdatePassword",
+      "file": "backend/app/models.py",
+      "line": 43,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "current_password",
+        "new_password"
+      ],
+      "relations": []
+    },
+    {
+      "name": "UserBase",
+      "file": "backend/app/models.py",
+      "line": 14,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "email",
+        "is_active",
+        "is_superuser",
+        "full_name"
+      ],
+      "relations": []
+    },
+    {
+      "name": "UserRegister",
+      "file": "backend/app/models.py",
+      "line": 26,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "email",
+        "password",
+        "full_name"
+      ],
+      "relations": []
+    },
+    {
+      "name": "UserUpdateMe",
+      "file": "backend/app/models.py",
+      "line": 38,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "full_name",
+        "email"
+      ],
+      "relations": []
+    },
+    {
+      "name": "UsersPublic",
+      "file": "backend/app/models.py",
+      "line": 65,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "data",
+        "count"
+      ],
+      "relations": []
+    }
+  ],
+  "tasks": [],
+  "findings": [
+    {
+      "code": "token-in-localstorage",
+      "severity": "high",
+      "file": "frontend/src/hooks/useAuth.ts",
+      "line": 45,
+      "message": "Auth token written to localStorage/AsyncStorage \u2014 prefer httpOnly cookies."
+    },
+    {
+      "code": "token-in-localstorage",
+      "severity": "info",
+      "file": "frontend/tests/login.spec.ts",
+      "line": 112,
+      "message": "Auth token written to localStorage/AsyncStorage \u2014 prefer httpOnly cookies."
+    }
+  ],
+  "module_edges": [
+    {
+      "from": "tests",
+      "to": "app",
+      "imports": 27
+    }
+  ],
+  "hotspots": [
+    {
+      "module": "app/core",
+      "fan_in": 30,
+      "fan_out": 0
+    },
+    {
+      "module": "app/models",
+      "fan_in": 16,
+      "fan_out": 0
+    },
+    {
+      "module": "tests/utils",
+      "fan_in": 11,
+      "fan_out": 27
+    },
+    {
+      "module": "app/api",
+      "fan_in": 7,
+      "fan_out": 0
+    },
+    {
+      "module": "app/utils",
+      "fan_in": 4,
+      "fan_out": 0
+    },
+    {
+      "module": "app/main",
+      "fan_in": 1,
+      "fan_out": 0
+    },
+    {
+      "module": "app/crud",
+      "fan_in": 1,
+      "fan_out": 0
+    },
+    {
+      "module": "app/backend_pre_start",
+      "fan_in": 1,
+      "fan_out": 0
+    },
+    {
+      "module": "app/tests_pre_start",
+      "fan_in": 1,
+      "fan_out": 0
+    }
+  ],
+  "mermaid_modules": "```mermaid\ngraph LR\n  M0[\"app\"]\n  M1[\"tests\"]\n  M1 -->|27| M0\n```",
+  "mermaid_er": "```mermaid\nerDiagram\n  UserBase { }\n  UserRegister { }\n  UserUpdateMe { }\n  UpdatePassword { }\n  UsersPublic { }\n  ItemBase { }\n  ItemsPublic { }\n  Message { }\n  Token { }\n  TokenPayload { }\n  NewPassword { }\n```"
+}

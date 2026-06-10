@@ -1,0 +1,187 @@
+{
+  "xray_version": "0.1.1",
+  "repo": "commerce",
+  "stats": {
+    "code_files": 65,
+    "parsed_files": 65,
+    "mapped_files": 6,
+    "unmapped_files": 0,
+    "routes": 6,
+    "entities": 0,
+    "tasks": 0,
+    "graph_edges": 3
+  },
+  "score": 63,
+  "modules": [
+    "app",
+    "components",
+    "lib"
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "methods": [
+        "GET"
+      ],
+      "handler": "page",
+      "file": "app/page.tsx",
+      "line": 1,
+      "framework": "nextjs-page",
+      "auth": null
+    },
+    {
+      "path": "/:page",
+      "methods": [
+        "GET"
+      ],
+      "handler": "page",
+      "file": "app/[page]/page.tsx",
+      "line": 1,
+      "framework": "nextjs-page",
+      "auth": null
+    },
+    {
+      "path": "/api/revalidate",
+      "methods": [
+        "POST"
+      ],
+      "handler": "route",
+      "file": "app/api/revalidate/route.ts",
+      "line": 1,
+      "framework": "nextjs-api",
+      "auth": null
+    },
+    {
+      "path": "/product/:handle",
+      "methods": [
+        "GET"
+      ],
+      "handler": "page",
+      "file": "app/product/[handle]/page.tsx",
+      "line": 1,
+      "framework": "nextjs-page",
+      "auth": null
+    },
+    {
+      "path": "/search",
+      "methods": [
+        "GET"
+      ],
+      "handler": "page",
+      "file": "app/search/page.tsx",
+      "line": 1,
+      "framework": "nextjs-page",
+      "auth": null
+    },
+    {
+      "path": "/search/:collection",
+      "methods": [
+        "GET"
+      ],
+      "handler": "page",
+      "file": "app/search/[collection]/page.tsx",
+      "line": 1,
+      "framework": "nextjs-page",
+      "auth": null
+    }
+  ],
+  "entities": [],
+  "tasks": [],
+  "findings": [],
+  "module_edges": [
+    {
+      "from": "app",
+      "to": "components",
+      "imports": 23
+    },
+    {
+      "from": "components",
+      "to": "lib",
+      "imports": 23
+    },
+    {
+      "from": "app",
+      "to": "lib",
+      "imports": 17
+    }
+  ],
+  "hotspots": [
+    {
+      "module": "lib/shopify",
+      "fan_in": 27,
+      "fan_out": 0
+    },
+    {
+      "module": "components/layout",
+      "fan_in": 10,
+      "fan_out": 23
+    },
+    {
+      "module": "components/grid",
+      "fan_in": 9,
+      "fan_out": 23
+    },
+    {
+      "module": "lib/constants",
+      "fan_in": 9,
+      "fan_out": 0
+    },
+    {
+      "module": "components/cart",
+      "fan_in": 6,
+      "fan_out": 23
+    },
+    {
+      "module": "lib/utils",
+      "fan_in": 6,
+      "fan_out": 0
+    },
+    {
+      "module": "components/opengraph-image",
+      "fan_in": 3,
+      "fan_out": 23
+    },
+    {
+      "module": "components/product",
+      "fan_in": 2,
+      "fan_out": 23
+    },
+    {
+      "module": "components/prose",
+      "fan_in": 2,
+      "fan_out": 23
+    },
+    {
+      "module": "components/price",
+      "fan_in": 2,
+      "fan_out": 23
+    },
+    {
+      "module": "components/logo-square",
+      "fan_in": 2,
+      "fan_out": 23
+    },
+    {
+      "module": "components/welcome-toast",
+      "fan_in": 1,
+      "fan_out": 23
+    },
+    {
+      "module": "components/carousel",
+      "fan_in": 1,
+      "fan_out": 23
+    },
+    {
+      "module": "components/loading-dots",
+      "fan_in": 1,
+      "fan_out": 23
+    },
+    {
+      "module": "lib/type-guards",
+      "fan_in": 1,
+      "fan_out": 0
+    }
+  ],
+  "mermaid_modules": "```mermaid\ngraph LR\n  M0[\"app\"]\n  M1[\"components\"]\n  M2[\"lib\"]\n  M0 -->|23| M1\n  M1 -->|23| M2\n  M0 -->|17| M2\n```",
+  "mermaid_er": "```mermaid\nerDiagram\n```"
+}

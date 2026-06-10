@@ -1,0 +1,472 @@
+{
+  "xray_version": "0.1.1",
+  "repo": "microblog",
+  "stats": {
+    "code_files": 34,
+    "parsed_files": 34,
+    "mapped_files": 5,
+    "unmapped_files": 0,
+    "routes": 27,
+    "entities": 5,
+    "tasks": 0,
+    "graph_edges": 1
+  },
+  "score": 78,
+  "modules": [
+    "app",
+    "migrations"
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "index",
+      "file": "app/main/routes.py",
+      "line": 28,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/edit_profile",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "edit_profile",
+      "file": "app/main/routes.py",
+      "line": 99,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/explore",
+      "methods": [
+        "GET"
+      ],
+      "handler": "explore",
+      "file": "app/main/routes.py",
+      "line": 56,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/export_posts",
+      "methods": [
+        "GET"
+      ],
+      "handler": "export_posts",
+      "file": "app/main/routes.py",
+      "line": 221,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/follow/<username>",
+      "methods": [
+        "POST"
+      ],
+      "handler": "follow",
+      "file": "app/main/routes.py",
+      "line": 116,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/index",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "index",
+      "file": "app/main/routes.py",
+      "line": 28,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/login",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "login",
+      "file": "app/auth/routes.py",
+      "line": 15,
+      "framework": "flask",
+      "auth": false
+    },
+    {
+      "path": "/logout",
+      "methods": [
+        "GET"
+      ],
+      "handler": "logout",
+      "file": "app/auth/routes.py",
+      "line": 34,
+      "framework": "flask",
+      "auth": false
+    },
+    {
+      "path": "/messages",
+      "methods": [
+        "GET"
+      ],
+      "handler": "messages",
+      "file": "app/main/routes.py",
+      "line": 201,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/notifications",
+      "methods": [
+        "GET"
+      ],
+      "handler": "notifications",
+      "file": "app/main/routes.py",
+      "line": 232,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/register",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "register",
+      "file": "app/auth/routes.py",
+      "line": 40,
+      "framework": "flask",
+      "auth": false
+    },
+    {
+      "path": "/reset_password/<token>",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "reset_password",
+      "file": "app/auth/routes.py",
+      "line": 73,
+      "framework": "flask",
+      "auth": false
+    },
+    {
+      "path": "/reset_password_request",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "reset_password_request",
+      "file": "app/auth/routes.py",
+      "line": 56,
+      "framework": "flask",
+      "auth": false
+    },
+    {
+      "path": "/search",
+      "methods": [
+        "GET"
+      ],
+      "handler": "search",
+      "file": "app/main/routes.py",
+      "line": 167,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/send_message/<recipient>",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "send_message",
+      "file": "app/main/routes.py",
+      "line": 183,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/tokens",
+      "methods": [
+        "POST"
+      ],
+      "handler": "get_token",
+      "file": "app/api/tokens.py",
+      "line": 8,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/tokens",
+      "methods": [
+        "DELETE"
+      ],
+      "handler": "revoke_token",
+      "file": "app/api/tokens.py",
+      "line": 16,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/translate",
+      "methods": [
+        "POST"
+      ],
+      "handler": "translate_text",
+      "file": "app/main/routes.py",
+      "line": 158,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/unfollow/<username>",
+      "methods": [
+        "POST"
+      ],
+      "handler": "unfollow",
+      "file": "app/main/routes.py",
+      "line": 137,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/user/<username>",
+      "methods": [
+        "GET"
+      ],
+      "handler": "user",
+      "file": "app/main/routes.py",
+      "line": 73,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/user/<username>/popup",
+      "methods": [
+        "GET"
+      ],
+      "handler": "user_popup",
+      "file": "app/main/routes.py",
+      "line": 91,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/users",
+      "methods": [
+        "GET"
+      ],
+      "handler": "get_users",
+      "file": "app/api/users.py",
+      "line": 18,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/users",
+      "methods": [
+        "POST"
+      ],
+      "handler": "create_user",
+      "file": "app/api/users.py",
+      "line": 46,
+      "framework": "flask",
+      "auth": false
+    },
+    {
+      "path": "/users/<int:id>",
+      "methods": [
+        "GET"
+      ],
+      "handler": "get_user",
+      "file": "app/api/users.py",
+      "line": 12,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/users/<int:id>",
+      "methods": [
+        "PUT"
+      ],
+      "handler": "update_user",
+      "file": "app/api/users.py",
+      "line": 66,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/users/<int:id>/followers",
+      "methods": [
+        "GET"
+      ],
+      "handler": "get_followers",
+      "file": "app/api/users.py",
+      "line": 27,
+      "framework": "flask",
+      "auth": true
+    },
+    {
+      "path": "/users/<int:id>/following",
+      "methods": [
+        "GET"
+      ],
+      "handler": "get_following",
+      "file": "app/api/users.py",
+      "line": 37,
+      "framework": "flask",
+      "auth": true
+    }
+  ],
+  "entities": [
+    {
+      "name": "Message",
+      "file": "app/models.py",
+      "line": 303,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "id",
+        "sender_id",
+        "recipient_id",
+        "body",
+        "timestamp",
+        "author",
+        "recipient"
+      ],
+      "relations": []
+    },
+    {
+      "name": "Notification",
+      "file": "app/models.py",
+      "line": 324,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "id",
+        "name",
+        "user_id",
+        "timestamp",
+        "payload_json",
+        "user"
+      ],
+      "relations": []
+    },
+    {
+      "name": "Post",
+      "file": "app/models.py",
+      "line": 287,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "id",
+        "body",
+        "timestamp",
+        "user_id",
+        "language",
+        "author"
+      ],
+      "relations": []
+    },
+    {
+      "name": "Task",
+      "file": "app/models.py",
+      "line": 338,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "id",
+        "name",
+        "description",
+        "user_id",
+        "complete",
+        "user"
+      ],
+      "relations": []
+    },
+    {
+      "name": "User",
+      "file": "app/models.py",
+      "line": 98,
+      "framework": "sqlalchemy/django",
+      "fields": [
+        "id",
+        "username",
+        "email",
+        "password_hash",
+        "about_me",
+        "last_seen",
+        "last_message_read_time",
+        "token",
+        "token_expiration",
+        "posts",
+        "following",
+        "followers",
+        "messages_sent",
+        "messages_received",
+        "notifications",
+        "tasks"
+      ],
+      "relations": []
+    }
+  ],
+  "tasks": [],
+  "findings": [],
+  "module_edges": [
+    {
+      "from": "(root)",
+      "to": "app",
+      "imports": 4
+    }
+  ],
+  "hotspots": [
+    {
+      "module": "app/api",
+      "fan_in": 10,
+      "fan_out": 0
+    },
+    {
+      "module": "app/models",
+      "fan_in": 9,
+      "fan_out": 0
+    },
+    {
+      "module": "app/auth",
+      "fan_in": 5,
+      "fan_out": 0
+    },
+    {
+      "module": "app/main",
+      "fan_in": 4,
+      "fan_out": 0
+    },
+    {
+      "module": "app/errors",
+      "fan_in": 3,
+      "fan_out": 0
+    },
+    {
+      "module": "app/email",
+      "fan_in": 2,
+      "fan_out": 0
+    },
+    {
+      "module": "app/search",
+      "fan_in": 1,
+      "fan_out": 0
+    },
+    {
+      "module": "app/cli",
+      "fan_in": 1,
+      "fan_out": 0
+    },
+    {
+      "module": "app/translate",
+      "fan_in": 1,
+      "fan_out": 0
+    }
+  ],
+  "mermaid_modules": "```mermaid\ngraph LR\n  M0[\"(root)\"]\n  M1[\"app\"]\n  M0 -->|4| M1\n```",
+  "mermaid_er": "```mermaid\nerDiagram\n  User { }\n  Post { }\n  Message { }\n  Notification { }\n  Task { }\n```"
+}

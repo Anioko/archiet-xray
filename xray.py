@@ -32,7 +32,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-XRAY_VERSION = "0.1.0"
+XRAY_VERSION = "0.1.1"
 
 # ── repo walking ─────────────────────────────────────────────────────────────
 
@@ -171,6 +171,14 @@ AUTH_DECORATOR_HINTS = {
     "authenticated",
 }
 AUTH_CALL_HINTS = {"get_current_user", "get_jwt_identity", "current_user"}
+# Auth-ish dependency names in FastAPI signatures/annotations:
+# CurrentUser, current_active_user, get_current_active_superuser, RequireAdmin…
+AUTH_NAME_RE = re.compile(
+    r"current.?(active.?)?(user|superuser|admin)|superuser|require.?(auth|admin|user)"
+    r"|authenticated|api.?key.?auth|oauth2.?scheme|verify.?token",
+    re.I,
+)
+MIGRATION_PATH_RE = re.compile(r"(^|/)(alembic|migrations)(/|$)", re.I)
 TASK_DECORATOR_HINTS = {"task", "shared_task", "periodic_task"}
 MODEL_BASE_HINTS = {"Model", "Base", "DeclarativeBase", "SQLModel"}
 SECRET_NAME_RE = re.compile(
@@ -256,23 +264,44 @@ class PyScanner(ast.NodeVisitor):
             if leaf in TASK_DECORATOR_HINTS:
                 self.tasks.append(AsyncTask(node.name, self.rel, node.lineno, "celery"))
         if not auth_seen:
-            # FastAPI-style auth: Depends(get_current_user) in signature
-            sig_src_names = {
-                _dec_name(d.func) if isinstance(d, ast.Call) else ""
-                for a in node.args.defaults + node.args.kw_defaults
-                if a is not None
-                for d in [a]
-            }
-            body_calls = {
-                _dec_name(c.func).rsplit(".", 1)[-1]
-                for c in ast.walk(node)
-                if isinstance(c, ast.Call)
-            }
-            if (
-                any("Depends" in s for s in sig_src_names)
-                or body_calls & AUTH_CALL_HINTS
-            ):
-                auth_seen = True
+            # FastAPI-style auth, three shapes:
+            #   (a) default value:   user = Depends(get_current_user)
+            #   (b) Annotated alias: current_user: CurrentUser
+            #   (c) route kwarg:     @router.get(..., dependencies=[Depends(...)])
+            args = node.args
+            sig_nodes: list[ast.expr] = list(args.defaults)
+            sig_nodes += [d for d in args.kw_defaults if d is not None]
+            sig_nodes += [
+                a.annotation
+                for a in args.posonlyargs + args.args + args.kwonlyargs
+                if a.annotation is not None
+            ]
+            for _, call in route_calls:
+                sig_nodes += [
+                    kw.value for kw in call.keywords if kw.arg == "dependencies"
+                ]
+            for sn in sig_nodes:
+                for sub in ast.walk(sn):
+                    name = ""
+                    if isinstance(sub, ast.Call):
+                        name = _dec_name(sub.func)
+                        if name.rsplit(".", 1)[-1] == "Depends" and sub.args:
+                            name = _dec_name(sub.args[0])
+                    elif isinstance(sub, (ast.Name, ast.Attribute)):
+                        name = _dec_name(sub)
+                    if name and ("Depends" in name or AUTH_NAME_RE.search(name)):
+                        auth_seen = True
+                        break
+                if auth_seen:
+                    break
+            if not auth_seen:
+                body_calls = {
+                    _dec_name(c.func).rsplit(".", 1)[-1]
+                    for c in ast.walk(node)
+                    if isinstance(c, ast.Call)
+                }
+                if body_calls & AUTH_CALL_HINTS:
+                    auth_seen = True
 
         for leaf, call in route_calls:
             path = next(
@@ -296,6 +325,12 @@ class PyScanner(ast.NodeVisitor):
                             if (s := _str_const(e)) is not None
                         ]
                 methods = methods or ["GET"]
+            # Honesty: FastAPI routers commonly attach auth at include_router /
+            # APIRouter(dependencies=...) level, invisible per-function. When we
+            # saw nothing, report unknown (None) — never a confident False.
+            auth_val: bool | None = (
+                True if auth_seen else (False if framework == "flask" else None)
+            )
             self.routes.append(
                 Route(
                     path,
@@ -304,7 +339,7 @@ class PyScanner(ast.NodeVisitor):
                     self.rel,
                     node.lineno,
                     framework,
-                    auth_seen,
+                    auth_val,
                 )
             )
 
@@ -402,7 +437,8 @@ class PyScanner(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call):
         leaf = _dec_name(node.func).rsplit(".", 1)[-1]
-        if leaf in {"execute", "executemany"}:
+        # Migration files legitimately contain raw SQL — not a boundary risk.
+        if leaf in {"execute", "executemany"} and not MIGRATION_PATH_RE.search(self.rel):
             sql = next((s for a in node.args if (s := _str_const(a)) is not None), None)
             if sql and re.match(r"\s*(SELECT|INSERT|UPDATE|DELETE)\b", sql, re.I):
                 self.findings.append(
@@ -450,12 +486,12 @@ LOCALSTORAGE_TOKEN_RE = re.compile(
 def next_route_from_path(rel: str) -> str | None:
     """Derive a Next.js app/pages router URL from a file path."""
     norm = rel.replace("\\", "/")
-    m = re.search(r"(?:^|/)app/(.*)/(page|route)\.(tsx?|jsx?)$", norm)
+    m = re.search(r"(?:^|/)app/(?:(.*)/)?(page|route)\.(tsx?|jsx?)$", norm)
     if m:
-        url = "/" + m.group(1)
+        url = "/" + (m.group(1) or "")
         url = re.sub(r"/\([^)]+\)", "", url)  # drop route groups
         url = re.sub(r"\[(\.{3})?(\w+)\]", r":\2", url)  # [id] -> :id
-        return url or "/"
+        return url.rstrip("/") or "/"
     m = re.search(r"(?:^|/)pages/(.*?)\.(tsx?|jsx?)$", norm)
     if m and not m.group(1).startswith("_"):
         url = "/" + m.group(1)
@@ -508,7 +544,7 @@ def scan_js(path: Path, rel: str) -> dict:
         findings.append(
             Finding(
                 "token-in-localstorage",
-                "high",
+                "info" if TEST_PATH_RE.search(norm) else "high",
                 rel,
                 line,
                 "Auth token written to localStorage/AsyncStorage — prefer httpOnly cookies.",
@@ -556,7 +592,7 @@ def module_of(rel: str) -> str:
     """Map a file to a coarse module: its top one-or-two path segments."""
     parts = Path(rel).parts
     if len(parts) == 1:
-        return "<root>"
+        return "(root)"
     return "/".join(parts[:2]) if len(parts) > 2 else parts[0]
 
 
@@ -568,15 +604,40 @@ def internal_target(imp: str, top_levels: set[str]) -> str | None:
     return None
 
 
+def python_package_roots(files: list[Path], root: Path) -> dict[str, str]:
+    """Map importable package name -> repo-relative dir prefix.
+
+    Handles nested layouts (``backend/app/`` imported as ``app``, ``src/<pkg>``)
+    by finding directories that contain ``__init__.py`` while their parent
+    does not — those are the real Python import roots.
+    """
+    init_dirs: set[str] = set()
+    for p in files:
+        if p.name == "__init__.py":
+            init_dirs.add(str(p.parent.relative_to(root)).replace("\\", "/"))
+    roots: dict[str, str] = {}
+    for d in init_dirs:
+        parent = d.rsplit("/", 1)[0] if "/" in d else ""
+        if parent not in init_dirs:
+            roots[d.rsplit("/", 1)[-1]] = d
+    return roots
+
+
 # ── scoring ──────────────────────────────────────────────────────────────────
 
 
 def visibility_score(stats: dict) -> int:
+    """How much of the repo X-Ray could read and structure.
+
+    'Parsed' = the file was successfully read into the model (its imports
+    feed the graph even when it holds no routes/entities). Element counts
+    reward repos where the extractor found real structure.
+    """
     total = max(stats["code_files"], 1)
-    mapped_ratio = stats["mapped_files"] / total
-    score = 40 * mapped_ratio
-    score += min(20, stats["routes"] * 0.5)
-    score += min(20, stats["entities"] * 1.0)
+    parsed_ratio = stats.get("parsed_files", stats["mapped_files"]) / total
+    score = 50 * parsed_ratio
+    score += min(15, stats["routes"] * 0.5)
+    score += min(15, stats["entities"] * 1.0)
     score += 10 if stats["graph_edges"] > 0 else 0
     score += min(10, stats["tasks"] * 1.0)
     return int(round(min(score, 100)))
@@ -640,7 +701,8 @@ def render_architecture_md(model: dict) -> str:
         f"**Visibility score: {model['score']}/100** · "
         f"{s['code_files']} code files · {s['routes']} routes · "
         f"{s['entities']} entities · {s['tasks']} async tasks · "
-        f"{s['mapped_files']} files mapped ({s['unmapped_files']} unmapped)",
+        f"{s.get('parsed_files', s['mapped_files'])} files read, "
+        f"{s['mapped_files']} with extracted elements ({s['unmapped_files']} unreadable)",
         "",
         "## System map (module dependencies)",
         "",
@@ -743,6 +805,7 @@ def xray(root: Path) -> dict:
     findings: list[Finding] = []
     file_imports: dict[str, set[str]] = {}
     mapped: set[str] = set()
+    parsed: set[str] = set()
 
     for p in files:
         rel = str(p.relative_to(root)).replace("\\", "/")
@@ -750,6 +813,7 @@ def xray(root: Path) -> dict:
             s = scan_python(p, rel)
             if s is None:
                 continue
+            parsed.add(rel)
             if s.routes or s.entities or s.tasks:
                 mapped.add(rel)
             routes += s.routes
@@ -759,6 +823,7 @@ def xray(root: Path) -> dict:
             file_imports[rel] = s.imports
         elif p.suffix in {".ts", ".tsx", ".js", ".jsx"}:
             r = scan_js(p, rel)
+            parsed.add(rel)
             if r["routes"]:
                 mapped.add(rel)
             routes += r["routes"]
@@ -766,34 +831,46 @@ def xray(root: Path) -> dict:
             file_imports[rel] = r["imports"]
         elif p.suffix == ".prisma":
             es = scan_prisma(p, rel)
+            parsed.add(rel)
             if es:
                 mapped.add(rel)
             entities += es
 
-    # module graph
+    # module graph — resolve imports against real Python package roots
+    # (handles backend/app, src/<pkg> nesting) plus plain top-level dirs.
+    pkg_roots = python_package_roots(files, root)
     top_levels = {
         Path(rel).parts[0] for rel in file_imports if len(Path(rel).parts) > 1
     }
+
+    def src_module(rel: str) -> str:
+        for name, prefix in pkg_roots.items():
+            if rel == prefix or rel.startswith(prefix + "/"):
+                return name
+        return rel.split("/")[0] if "/" in rel else "(root)"
+
     edges: dict[tuple[str, str], int] = defaultdict(int)
     fan_in: dict[str, int] = defaultdict(int)
     fan_out: dict[str, int] = defaultdict(int)
     for rel, imps in file_imports.items():
-        src = module_of(rel)
+        src = src_module(rel)
         for imp in imps:
-            tgt = internal_target(imp, top_levels)
-            if tgt and tgt != src.split("/")[0]:
-                edges[(src.split("/")[0], tgt)] += 1
+            head = imp.lstrip("./").replace("\\", "/").split("/")[0].split(".")[0]
+            tgt = head if head in pkg_roots else internal_target(imp, top_levels)
+            if tgt and tgt != src:
+                edges[(src, tgt)] += 1
     for (a, b), n in edges.items():
         fan_out[a] += n
         fan_in[b] += n
 
     # files importing a module also make 2-segment modules hot
+    importable = set(pkg_roots) | top_levels
     seg2_in: dict[str, int] = defaultdict(int)
     for rel, imps in file_imports.items():
         for imp in imps:
             norm = imp.replace(".", "/").lstrip("/")
             parts = norm.split("/")
-            if len(parts) >= 2 and parts[0] in top_levels:
+            if len(parts) >= 2 and parts[0] in importable:
                 seg2_in["/".join(parts[:2])] += 1
     hotspots = [
         {"module": m, "fan_in": n, "fan_out": fan_out.get(m.split("/")[0], 0)}
@@ -802,8 +879,9 @@ def xray(root: Path) -> dict:
 
     stats = {
         "code_files": len(files),
+        "parsed_files": len(parsed),
         "mapped_files": len(mapped),
-        "unmapped_files": len(files) - len(mapped),
+        "unmapped_files": len(files) - len(parsed),
         "routes": len(routes),
         "entities": len(entities),
         "tasks": len(tasks),
