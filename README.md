@@ -35,8 +35,14 @@ Archiet X-Ray v0.1.0 — your-repo
 
 ## Give it to your agent (MCP)
 
+Published to the [MCP Registry](https://registry.modelcontextprotocol.io) as
+`mcp-name: io.github.anioko/archiet-xray`.
+
 ```bash
-# Claude Code
+# Claude Code — from PyPI (recommended)
+claude mcp add archiet-xray -- uvx archiet-xray mcp /path/to/repo
+
+# Claude Code — from a local checkout
 claude mcp add archiet-xray -- python /path/to/mcp_server.py /path/to/repo
 ```
 

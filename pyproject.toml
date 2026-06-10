@@ -25,6 +25,7 @@ Repository = "https://github.com/Anioko/archiet-xray"
 
 [project.scripts]
 archiet-xray = "xray:main"
+archiet-xray-mcp = "mcp_server:main"
 
 [tool.setuptools]
 py-modules = ["xray", "mcp_server"]

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.anioko/archiet-xray",
+  "title": "Archiet X-Ray",
+  "description": "Deterministic architecture maps for any repo: blast radius, routes, entities, and risk findings.",
+  "repository": {
+    "url": "https://github.com/Anioko/archiet-xray",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "websiteUrl": "https://archiet.com",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "archiet-xray",
+      "version": "0.1.1",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp",
+          "valueHint": "mcp",
+          "description": "Run the MCP server (stdio)",
+          "isRequired": true
+        },
+        {
+          "type": "positional",
+          "valueHint": "repo_path",
+          "description": "Path to the repository to scan (default: current directory)",
+          "isRequired": false
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tools": [
+        {
+          "name": "xray_scan",
+          "description": "Scan the repository and build the architecture model (routes, entities, tasks, module dependency graph, findings)."
+        },
+        {
+          "name": "arch_summary",
+          "description": "Compact architecture summary: modules, route prefixes, domain entities, hotspots, visibility score."
+        },
+        {
+          "name": "blast_radius",
+          "description": "Given a file or module path, report what depends on it (fan-in), what it depends on (fan-out), and the routes/entities it contains."
+        },
+        {
+          "name": "boundary_findings",
+          "description": "Deterministic risk findings: hardcoded secrets, raw SQL bypassing the ORM, auth tokens in localStorage, routes without auth guards."
+        }
+      ]
+    }
+  }
+}
