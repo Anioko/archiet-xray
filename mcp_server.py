@@ -223,8 +223,9 @@ class Server:
         }
 
 
-def main() -> int:
-    repo = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    repo = Path(args[0]) if args else Path(".")
     if not repo.is_dir():
         print(f"error: {repo} is not a directory", file=sys.stderr)
         return 2

@@ -1,0 +1,17 @@
+# Smithery configuration — https://smithery.ai/docs/config
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      repoPath:
+        type: string
+        description: Path to the repository to scan
+        default: "."
+  commandFunction: |-
+    (config) => ({
+      command: "python",
+      args: ["mcp_server.py", config.repoPath || "."]
+    })
+  exampleConfig:
+    repoPath: "."

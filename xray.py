@@ -913,6 +913,13 @@ def xray(root: Path) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv and argv[0] == "mcp":
+        # `archiet-xray mcp [repo]` — run the MCP server over stdio
+        import mcp_server
+
+        return mcp_server.main(argv[1:])
     ap = argparse.ArgumentParser(
         description="Archiet X-Ray — extract the real architecture of a repo."
     )
