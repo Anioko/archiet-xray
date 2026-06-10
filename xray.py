@@ -948,7 +948,10 @@ def main(argv: list[str] | None = None) -> int:
         s = model["stats"]
         print(f"Archiet X-Ray v{XRAY_VERSION} — {model['repo']}")
         print(f"  visibility score : {model['score']}/100")
-        print(f"  code files       : {s['code_files']} ({s['mapped_files']} mapped)")
+        print(
+            f"  code files       : {s['code_files']} "
+            f"({s['parsed_files']} read, {s['mapped_files']} with elements)"
+        )
         print(f"  routes           : {s['routes']}")
         print(f"  entities         : {s['entities']}")
         print(f"  async tasks      : {s['tasks']}")
