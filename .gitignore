@@ -1,0 +1,5 @@
+__pycache__/
+.archiet/
+*.egg-info/
+dist/
+.pytest_cache/

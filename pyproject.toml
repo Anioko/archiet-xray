@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "archiet-xray"
+version = "0.1.0"
+description = "See what your AI sees — deterministic architecture extraction for any repo, with an MCP server for AI coding agents."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Archiet", email = "aniekan.okono@archiet.dev" }]
+keywords = ["architecture", "mcp", "ai-agents", "static-analysis", "codebase-map"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://archiet.com"
+Repository = "https://github.com/Anioko/archiet-xray"
+
+[project.scripts]
+archiet-xray = "xray:main"
+
+[tool.setuptools]
+py-modules = ["xray", "mcp_server"]
