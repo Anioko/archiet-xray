@@ -67,6 +67,39 @@ Your agent can now ask — *before* it edits:
 More stacks (Go, Java, Rails, .NET) welcome — the extractor pattern is one
 class per language. PRs invited.
 
+## Real examples
+
+[`examples/`](examples/) holds unedited X-Ray output for repos you know —
+microblog (Flask), the official FastAPI full-stack template, and
+vercel/commerce (Next.js). GitHub renders the Mermaid maps inline. On the
+FastAPI template, X-Ray correctly detects `CurrentUser` dependency auth on 18
+routes and flags a real auth-token-in-localStorage write in `useAuth.ts`.
+
+## FAQ
+
+**How is this different from a dependency-graph MCP server (Codegraph, dependency-mcp)?**
+Those show call/import edges. X-Ray extracts *web-architecture semantics* on top
+of the graph: which routes exist, which carry auth guards, where the domain
+entities live, and where security boundaries leak (hardcoded secrets, raw SQL,
+tokens in localStorage). No graph tool tells you "510 of your routes have no
+detectable auth guard."
+
+**How is this different from a CLAUDE.md generator?**
+CLAUDE.md generators write *instructions and conventions* — usually with an
+LLM. X-Ray extracts *facts*: every claim in its output traces to a file and
+line, and what it can't extract it labels unknown. Use both: your conventions
+plus X-Ray's ground truth.
+
+**What does auth status `?` mean?**
+"Not detectable from per-function analysis." FastAPI routers often attach auth
+at `include_router(dependencies=...)` level, which is invisible when analyzing
+the route function. X-Ray reports unknown rather than guessing a confident
+"no auth" — a wrong map is worse than no map.
+
+**Does it phone home?**
+No. Stdlib-only, zero network calls, zero telemetry. The only outbound anything
+is a link in the generated footer.
+
 ## Part of Archiet
 
 X-Ray is the free, open companion to [Archiet](https://archiet.com) — the
