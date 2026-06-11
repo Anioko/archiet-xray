@@ -2,7 +2,11 @@
   "manifest_version": "0.2",
   "name": "archiet-xray",
   "display_name": "Archiet X-Ray",
-  "version": "0.2.3",
+  "version": "0.2.4",
+  "privacy_policies": [
+    "https://github.com/Anioko/archiet-xray#privacy-policy",
+    "https://archiet.com/privacy"
+  ],
   "description": "Deterministic repo architecture maps: auth coverage, blast radius, readiness score, diagrams",
   "long_description": "X-Ray extracts the real architecture of any repo — every route with auth-guard status, ORM entities and relations, the module dependency graph with blast-radius hotspots, boundary risks (hardcoded secrets, raw SQL, tokens in localStorage), a deterministic 0-100 production-readiness score, and Mermaid architecture diagrams. No LLM anywhere in the pipeline, stdlib-only, zero network calls — your code never leaves your machine.",
   "author": {

@@ -32,7 +32,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-XRAY_VERSION = "0.2.3"
+XRAY_VERSION = "0.2.4"
 
 # ── repo walking ─────────────────────────────────────────────────────────────
 

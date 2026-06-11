@@ -42,6 +42,11 @@ TOOLS = [
             "properties": {},
             "additionalProperties": False,
         },
+        "annotations": {
+            "title": "Scan repository architecture",
+            "readOnlyHint": True,
+            "openWorldHint": False,
+        },
     },
     {
         "name": "arch_summary",
@@ -54,6 +59,11 @@ TOOLS = [
             "type": "object",
             "properties": {},
             "additionalProperties": False,
+        },
+        "annotations": {
+            "title": "Architecture summary",
+            "readOnlyHint": True,
+            "openWorldHint": False,
         },
     },
     {
@@ -74,6 +84,11 @@ TOOLS = [
             "required": ["path"],
             "additionalProperties": False,
         },
+        "annotations": {
+            "title": "Blast radius of a file/module",
+            "readOnlyHint": True,
+            "openWorldHint": False,
+        },
     },
     {
         "name": "boundary_findings",
@@ -85,6 +100,11 @@ TOOLS = [
             "type": "object",
             "properties": {},
             "additionalProperties": False,
+        },
+        "annotations": {
+            "title": "Security boundary findings",
+            "readOnlyHint": True,
+            "openWorldHint": False,
         },
     },
     {
@@ -100,6 +120,11 @@ TOOLS = [
             "type": "object",
             "properties": {},
             "additionalProperties": False,
+        },
+        "annotations": {
+            "title": "Production-readiness score",
+            "readOnlyHint": True,
+            "openWorldHint": False,
         },
     },
     {
@@ -120,6 +145,12 @@ TOOLS = [
                 }
             },
             "additionalProperties": False,
+        },
+        "annotations": {
+            "title": "Generate architecture diagrams",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "openWorldHint": False,
         },
     },
 ]

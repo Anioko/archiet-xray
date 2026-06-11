@@ -70,23 +70,10 @@ self-contained `diagrams.html` viewer.
 
 ## Give it to your agent (MCP)
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=archiet-xray&config=eyJjb21tYW5kIjogInV2eCIsICJhcmdzIjogWyJhcmNoaWV0LXhyYXkiLCAibWNwIl19)
-
 ```bash
-# Claude Code (from PyPI — pip install archiet-xray)
-claude mcp add archiet-xray -- archiet-xray mcp /path/to/repo
-
-# or from a checkout
+# Claude Code
 claude mcp add archiet-xray -- python /path/to/mcp_server.py /path/to/repo
 ```
-
-**Claude Desktop** — download `archiet-xray-<version>.mcpb` from the
-[latest release](https://github.com/Anioko/archiet-xray/releases/latest),
-then double-click it (or Settings → Extensions → Install Extension). It
-prompts for the repository to analyze; one-click after that.
-
-**Official MCP Registry** — listed as `io.github.Anioko/archiet-xray`,
-so registry-aware clients can install it by name.
 
 Your agent can now ask — *before* it edits:
 
@@ -174,6 +161,28 @@ procurement-grade architecture audit (traceability %, severity-ranked gaps,
 [archiet.com/audit-my-architecture](https://archiet.com/audit-my-architecture).
 It is a separate server precisely so X-Ray's "your code never leaves your
 machine" guarantee stays absolute.
+
+## Privacy Policy
+
+X-Ray is local-only by design. Specifically:
+
+- **Data collection: none.** X-Ray collects no telemetry, no analytics, no
+  usage data, and no personal information of any kind.
+- **Data usage: local analysis only.** Your code is read from disk solely to
+  build the architecture model, in-process, on your machine.
+- **Data storage: your disk, your control.** The only artifacts produced are
+  the files written to `.archiet/` inside the repository you scan
+  (ARCHITECTURE.md, AGENT_CONTEXT.md, architecture.json, diagrams/). Delete
+  them at any time; nothing else is stored anywhere.
+- **Third-party sharing: none.** X-Ray makes zero network calls (stdlib-only,
+  no HTTP client is even imported). Your code never leaves your machine.
+- **Data retention: not applicable.** No data reaches us, so there is nothing
+  for us to retain or delete.
+- **Contact:** aniekan.okono@archiet.dev — or open an issue on this repo.
+
+The company-wide policy at [archiet.com/privacy](https://archiet.com/privacy)
+covers Archiet's hosted products; it applies to X-Ray only in the trivial
+sense that X-Ray sends us nothing.
 
 ## Part of Archiet
 
