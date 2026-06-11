@@ -70,10 +70,23 @@ self-contained `diagrams.html` viewer.
 
 ## Give it to your agent (MCP)
 
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=archiet-xray&config=eyJjb21tYW5kIjogInV2eCIsICJhcmdzIjogWyJhcmNoaWV0LXhyYXkiLCAibWNwIl19)
+
 ```bash
-# Claude Code
+# Claude Code (from PyPI — pip install archiet-xray)
+claude mcp add archiet-xray -- archiet-xray mcp /path/to/repo
+
+# or from a checkout
 claude mcp add archiet-xray -- python /path/to/mcp_server.py /path/to/repo
 ```
+
+**Claude Desktop** — download `archiet-xray-<version>.mcpb` from the
+[latest release](https://github.com/Anioko/archiet-xray/releases/latest),
+then double-click it (or Settings → Extensions → Install Extension). It
+prompts for the repository to analyze; one-click after that.
+
+**Official MCP Registry** — listed as `io.github.Anioko/archiet-xray`,
+so registry-aware clients can install it by name.
 
 Your agent can now ask — *before* it edits:
 

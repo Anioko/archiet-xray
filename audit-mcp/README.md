@@ -19,10 +19,19 @@ unguessable URL:
 The pipeline is deterministic — **no LLM reads your documents** — so the same
 documents always produce the same audit. Typical turnaround: ~15 seconds.
 
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=archiet-audit&config=eyJjb21tYW5kIjogInV2eCIsICJhcmdzIjogWyJhcmNoaWV0LWF1ZGl0LW1jcCJdfQ==)
+
 ```bash
-# Claude Code
+# Claude Code (from PyPI — pip install archiet-audit-mcp)
+claude mcp add archiet-audit -- archiet-audit-mcp
+
+# or from a checkout
 claude mcp add archiet-audit -- python /path/to/server.py
 ```
+
+**Official MCP Registry** — listed as `io.github.Anioko/archiet-audit`.
+**Hosted (no install)** — MCP-capable hosts can connect directly to the
+remote endpoint at `https://archiet.com/api/mcp` (streamable HTTP).
 
 Then ask your agent:
 

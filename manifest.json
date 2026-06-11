@@ -1,0 +1,46 @@
+{
+  "manifest_version": "0.2",
+  "name": "archiet-xray",
+  "display_name": "Archiet X-Ray",
+  "version": "0.2.3",
+  "description": "Deterministic repo architecture maps: auth coverage, blast radius, readiness score, diagrams",
+  "long_description": "X-Ray extracts the real architecture of any repo — every route with auth-guard status, ORM entities and relations, the module dependency graph with blast-radius hotspots, boundary risks (hardcoded secrets, raw SQL, tokens in localStorage), a deterministic 0-100 production-readiness score, and Mermaid architecture diagrams. No LLM anywhere in the pipeline, stdlib-only, zero network calls — your code never leaves your machine.",
+  "author": {
+    "name": "Archiet",
+    "email": "aniekan.okono@archiet.dev",
+    "url": "https://archiet.com"
+  },
+  "homepage": "https://archiet.com/xray",
+  "documentation": "https://github.com/Anioko/archiet-xray#readme",
+  "support": "https://github.com/Anioko/archiet-xray/issues",
+  "license": "MIT",
+  "keywords": ["architecture", "static-analysis", "blast-radius", "production-readiness", "diagrams"],
+  "server": {
+    "type": "python",
+    "entry_point": "server/mcp_server.py",
+    "mcp_config": {
+      "command": "python",
+      "args": ["${__dirname}/server/mcp_server.py", "${user_config.repo_path}"]
+    }
+  },
+  "user_config": {
+    "repo_path": {
+      "type": "directory",
+      "title": "Repository to analyze",
+      "description": "The local repository X-Ray maps for your AI agent. Code never leaves your machine.",
+      "required": true
+    }
+  },
+  "tools": [
+    { "name": "xray_scan", "description": "Scan the repository and build the architecture model (routes, entities, tasks, module graph, findings)." },
+    { "name": "arch_summary", "description": "Compact architecture summary: modules, route prefixes, domain entities, hotspots, visibility score." },
+    { "name": "blast_radius", "description": "What depends on a file/module (fan-in), what it depends on (fan-out), and the routes/entities it contains." },
+    { "name": "boundary_findings", "description": "Deterministic risk findings: hardcoded secrets, raw SQL, tokens in localStorage, routes without auth guards." },
+    { "name": "production_readiness", "description": "Deterministic 0-100 production-readiness score across 8 dimensions with evidence and top fixes." },
+    { "name": "generate_diagrams", "description": "Mermaid module graph, ER diagram, and HTTP route map extracted from the code, plus an HTML viewer." }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "python": ">=3.10" }
+  }
+}
