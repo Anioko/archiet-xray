@@ -5,10 +5,12 @@ A minimal, stdlib-only MCP (Model Context Protocol) server over stdio that
 exposes the X-Ray extractor to AI coding agents (Claude Code, Cursor,
 Windsurf, …). The agent can ask *before* it edits:
 
-  - xray_scan          (re)scan the repo, get stats + visibility score
-  - arch_summary       compact architecture summary (modules, routes, entities)
-  - blast_radius       who depends on this file/module? what breaks if I edit it?
-  - boundary_findings  deterministic risk findings (secrets, raw SQL, token storage)
+  - xray_scan              (re)scan the repo, get stats + visibility score
+  - arch_summary           compact architecture summary (modules, routes, entities)
+  - blast_radius           who depends on this file/module? what breaks if I edit it?
+  - boundary_findings      deterministic risk findings (secrets, raw SQL, token storage)
+  - production_readiness   0-100 production-readiness score across 8 dimensions
+  - generate_diagrams      Mermaid module/ER/route diagrams (+ HTML viewer on disk)
 
 Register (Claude Code):
   claude mcp add archiet-xray -- python /path/to/mcp_server.py /path/to/repo
@@ -82,6 +84,41 @@ TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "production_readiness",
+        "description": (
+            "Score the repo's production readiness 0-100 across 8 deterministic "
+            "dimensions (auth coverage, secrets hygiene, client token storage, "
+            "data-layer discipline, test footprint, migration discipline, ops "
+            "readiness, docs/API contract) with per-dimension evidence and the "
+            "top fixes ranked by points lost. Same repo always scores the same."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "generate_diagrams",
+        "description": (
+            "Generate architecture diagrams as Mermaid sources: module "
+            "dependency graph, domain-model ER diagram, and HTTP route map. "
+            "Also writes .archiet/diagrams/ (3 .mmd files + a self-contained "
+            "HTML viewer). Paste the Mermaid into any README/wiki — GitHub, "
+            "GitLab, Notion and VS Code render it natively."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "write": {
+                    "type": "boolean",
+                    "description": "also write .archiet/diagrams/ to disk (default true)",
+                }
+            },
             "additionalProperties": False,
         },
     },
@@ -164,6 +201,26 @@ class Server:
         ]
         return {"findings": m["findings"], "routes_without_auth_guard": no_auth[:40]}
 
+    def t_production_readiness(self, _args: dict) -> dict:
+        m = self._ensure_model()
+        return m["readiness"]
+
+    def t_generate_diagrams(self, args: dict) -> dict:
+        m = self._ensure_model()
+        pack = _xray.diagram_pack(m)
+        out: dict = {
+            "modules_mermaid": pack["modules.mmd"],
+            "er_mermaid": pack["er.mmd"],
+            "routes_mermaid": pack["routes.mmd"],
+        }
+        if args.get("write", True):
+            diagrams_dir = self.repo / ".archiet" / "diagrams"
+            diagrams_dir.mkdir(parents=True, exist_ok=True)
+            for fname, content in pack.items():
+                (diagrams_dir / fname).write_text(content, encoding="utf-8")
+            out["written_to"] = str(diagrams_dir)
+        return out
+
     # ── jsonrpc plumbing ────────────────────────────────────────────────
     def handle(self, msg: dict) -> dict | None:
         mid = msg.get("id")
@@ -223,9 +280,8 @@ class Server:
         }
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    repo = Path(args[0]) if args else Path(".")
+def main() -> int:
+    repo = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
     if not repo.is_dir():
         print(f"error: {repo} is not a directory", file=sys.stderr)
         return 2

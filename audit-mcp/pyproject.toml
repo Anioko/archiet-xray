@@ -3,14 +3,14 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "archiet-xray"
-version = "0.2.0"
-description = "See what your AI sees — deterministic architecture extraction, production-readiness scoring, and Mermaid architecture diagrams for any repo, with an MCP server for AI coding agents."
+name = "archiet-audit-mcp"
+version = "0.1.0"
+description = "Architecture audit MCP server — submit architecture docs from any AI coding agent and get back a consulting-grade traceability audit at a shareable URL."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Archiet", email = "aniekan.okono@archiet.dev" }]
-keywords = ["architecture", "mcp", "ai-agents", "static-analysis", "codebase-map"]
+keywords = ["architecture-audit", "mcp", "ai-agents", "architecture-review", "traceability"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -20,11 +20,11 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://archiet.com"
+Homepage = "https://archiet.com/audit-my-architecture"
 Repository = "https://github.com/Anioko/archiet-xray"
 
 [project.scripts]
-archiet-xray = "xray:main"
+archiet-audit-mcp = "server:main"
 
 [tool.setuptools]
-py-modules = ["xray", "mcp_server"]
+py-modules = ["server"]

@@ -32,7 +32,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-XRAY_VERSION = "0.1.1"
+XRAY_VERSION = "0.2.0"
 
 # ── repo walking ─────────────────────────────────────────────────────────────
 
@@ -111,6 +111,97 @@ def walk_repo(root: Path) -> list[Path]:
                 except OSError:
                     continue
     return files
+
+
+# ── repo marker signals (production-readiness inputs) ────────────────────────
+
+_MARKER_DEPTH = 3  # marker files live near the root; don't walk the world
+
+_OPENAPI_NAMES = {
+    "openapi.yaml",
+    "openapi.yml",
+    "openapi.json",
+    "swagger.yaml",
+    "swagger.yml",
+    "swagger.json",
+}
+_ENV_EXAMPLE_NAMES = {".env.example", ".env.sample", ".env.template"}
+_CI_FILE_NAMES = {".gitlab-ci.yml", "Jenkinsfile", "azure-pipelines.yml"}
+_MIGRATION_DIR_NAMES = {"alembic", "migrations"}
+_LOCKFILE_NAMES = {
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "poetry.lock",
+    "uv.lock",
+    "Pipfile.lock",
+    "go.sum",
+    "Cargo.lock",
+    "composer.lock",
+    "Gemfile.lock",
+}
+
+
+def repo_signals(root: Path) -> dict:
+    """Marker-file signals used by the production-readiness score.
+
+    Shallow (depth-bounded) walk: these markers conventionally live at or near
+    the repo root, so we never pay a full-tree walk for them. Deterministic —
+    pure existence checks, no content heuristics.
+    """
+    sig = {
+        "has_readme": False,
+        "has_openapi": False,
+        "has_migrations": False,
+        "has_dockerfile": False,
+        "has_ci": False,
+        "has_env_example": False,
+        "has_docs": False,
+        "has_lockfile": False,
+    }
+    skip = SKIP_DIRS | gitignored_dirs(root)
+    root_depth = len(root.parts)
+    for dirpath, dirnames, filenames in os.walk(root):
+        depth = len(Path(dirpath).parts) - root_depth
+        if depth >= _MARKER_DEPTH:
+            dirnames[:] = []
+            continue
+        # Keep .github (CI lives there); drop other dot-dirs + skip set.
+        dirnames[:] = [
+            d
+            for d in dirnames
+            if d not in skip and (not d.startswith(".") or d == ".github")
+        ]
+        norm_dir = dirpath.replace("\\", "/")
+        for d in dirnames:
+            dl = d.lower()
+            if dl in _MIGRATION_DIR_NAMES:
+                sig["has_migrations"] = True
+            if dl in {"docs", "doc"}:
+                sig["has_docs"] = True
+        for fn in filenames:
+            fl = fn.lower()
+            if fl.startswith("readme"):
+                sig["has_readme"] = True
+            if fl in _OPENAPI_NAMES:
+                sig["has_openapi"] = True
+            if fn == "Dockerfile" or fn.startswith("Dockerfile."):
+                sig["has_dockerfile"] = True
+            if fl.startswith(("docker-compose", "compose.")) and fl.endswith(
+                (".yml", ".yaml")
+            ):
+                sig["has_dockerfile"] = sig["has_dockerfile"] or True
+            if fn in _CI_FILE_NAMES or (
+                "/.github/workflows" in norm_dir and fl.endswith((".yml", ".yaml"))
+            ):
+                sig["has_ci"] = True
+            if fl in _ENV_EXAMPLE_NAMES:
+                sig["has_env_example"] = True
+            if fl == "architecture.md":
+                sig["has_docs"] = True
+            if fn in _LOCKFILE_NAMES:
+                sig["has_lockfile"] = True
+    return sig
 
 
 # ── model ────────────────────────────────────────────────────────────────────
@@ -438,7 +529,9 @@ class PyScanner(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call):
         leaf = _dec_name(node.func).rsplit(".", 1)[-1]
         # Migration files legitimately contain raw SQL — not a boundary risk.
-        if leaf in {"execute", "executemany"} and not MIGRATION_PATH_RE.search(self.rel):
+        if leaf in {"execute", "executemany"} and not MIGRATION_PATH_RE.search(
+            self.rel
+        ):
             sql = next((s for a in node.args if (s := _str_const(a)) is not None), None)
             if sql and re.match(r"\s*(SELECT|INSERT|UPDATE|DELETE)\b", sql, re.I):
                 self.findings.append(
@@ -643,6 +736,248 @@ def visibility_score(stats: dict) -> int:
     return int(round(min(score, 100)))
 
 
+READINESS_MORE_URL = "https://archiet.com/xray?utm_source=xray-readiness"
+
+
+def production_readiness(model: dict, signals: dict) -> dict:
+    """Deterministic production-readiness score (0–100) over 8 dimensions.
+
+    Static signals only — the same repo always scores the same. A high score
+    means the repo *carries the marks* of production discipline (auth guards,
+    no hardcoded secrets, tests, migrations, ops + docs contracts); it is not
+    a substitute for review, load testing, or a security audit, and the
+    disclaimer in the payload says so. Dimensions that don't apply (no HTTP
+    routes, no ORM entities) take half credit with an explicit note instead
+    of silently rewarding or punishing — honesty over flattery.
+    """
+    dims: list[dict] = []
+
+    def dim(did, name, points, mx, evidence, fix):
+        dims.append(
+            {
+                "id": did,
+                "name": name,
+                "points": int(round(points)),
+                "max": mx,
+                "evidence": evidence,
+                "fix": fix,
+            }
+        )
+
+    routes = model["routes"]
+    findings = model["findings"]
+    stats = model["stats"]
+
+    # 1. Auth coverage (20) — share of routes with a detectable auth guard,
+    #    over routes where auth is statically determinable (True/False).
+    api_routes = [r for r in routes if r["framework"] != "nextjs-page"]
+    scorable = [r for r in api_routes if r["auth"] is not None]
+    if scorable:
+        authed = sum(1 for r in scorable if r["auth"])
+        ratio = authed / len(scorable)
+        worst = [r["path"] for r in scorable if not r["auth"]][:3]
+        dim(
+            "auth_coverage",
+            "Route auth coverage",
+            20 * ratio,
+            20,
+            f"{authed}/{len(scorable)} statically-determinable routes carry an "
+            f"auth guard" + (f"; unguarded e.g. {worst}" if worst else ""),
+            "Add auth decorators/dependencies to unguarded routes (or mark "
+            "them intentionally public).",
+        )
+    elif api_routes:
+        dim(
+            "auth_coverage",
+            "Route auth coverage",
+            10,
+            20,
+            f"{len(api_routes)} routes found but auth is not statically "
+            "determinable for any (router-level guards are invisible "
+            "per-function) — half credit, unknown is not a pass.",
+            "Attach auth where it is visible per-route, or document the "
+            "router-level guard.",
+        )
+    else:
+        dim(
+            "auth_coverage",
+            "Route auth coverage",
+            10,
+            20,
+            "No HTTP routes detected (library/CLI repo?) — half credit, "
+            "not applicable.",
+            "",
+        )
+
+    # 2. Secrets hygiene (15) — −5 per high-severity hardcoded secret.
+    secret_highs = [
+        f
+        for f in findings
+        if f["code"] == "hardcoded-secret" and f["severity"] == "high"
+    ]
+    dim(
+        "secrets_hygiene",
+        "Secrets hygiene",
+        max(0, 15 - 5 * len(secret_highs)),
+        15,
+        f"{len(secret_highs)} hardcoded secret(s) in non-test source"
+        + (
+            f" (e.g. {secret_highs[0]['file']}:{secret_highs[0]['line']})"
+            if secret_highs
+            else ""
+        ),
+        "Move literals to environment variables / a secrets manager.",
+    )
+
+    # 3. Client token storage (10) — −5 per token written to localStorage.
+    ls_highs = [
+        f
+        for f in findings
+        if f["code"] == "token-in-localstorage" and f["severity"] == "high"
+    ]
+    dim(
+        "client_token_storage",
+        "Client token storage",
+        max(0, 10 - 5 * len(ls_highs)),
+        10,
+        f"{len(ls_highs)} auth token(s) written to localStorage/AsyncStorage",
+        "Move session tokens to httpOnly cookies.",
+    )
+
+    # 4. Data-layer discipline (10) — −2 per raw-SQL bypass of the ORM.
+    raw_sql = [f for f in findings if f["code"] == "raw-sql"]
+    dim(
+        "data_layer",
+        "Data-layer discipline",
+        max(0, 10 - 2 * len(raw_sql)),
+        10,
+        f"{len(raw_sql)} raw SQL call(s) bypassing the ORM outside migrations",
+        "Route data access through the ORM; parameterize anything that must "
+        "stay raw.",
+    )
+
+    # 5. Test signal (15) — test files as a share of code files; 15% ⇒ full.
+    test_files = stats.get("test_files", 0)
+    total = max(stats["code_files"], 1)
+    test_ratio = test_files / total
+    dim(
+        "tests",
+        "Test footprint",
+        min(15, 15 * (test_ratio / 0.15)),
+        15,
+        f"{test_files} test files / {total} code files "
+        f"({test_ratio:.0%}; 15% earns full marks)",
+        "Add tests beside the modules with the highest blast radius first.",
+    )
+
+    # 6. Migration discipline (10) — ORM entities demand a migrations dir.
+    if stats["entities"] > 0:
+        dim(
+            "migrations",
+            "Migration discipline",
+            10 if signals["has_migrations"] else 0,
+            10,
+            (
+                "ORM entities present and a migrations directory exists"
+                if signals["has_migrations"]
+                else f"{stats['entities']} ORM entities but NO migrations "
+                "directory — schema changes are untracked"
+            ),
+            "Adopt alembic / framework migrations; never create_all in prod.",
+        )
+    else:
+        dim(
+            "migrations",
+            "Migration discipline",
+            5,
+            10,
+            "No ORM entities detected — half credit, not applicable.",
+            "",
+        )
+
+    # 7. Ops readiness (10) — container story, CI, env contract.
+    ops_pts = (
+        (3 if signals["has_dockerfile"] else 0)
+        + (4 if signals["has_ci"] else 0)
+        + (3 if signals["has_env_example"] else 0)
+    )
+    ops_missing = [
+        n
+        for ok, n in (
+            (signals["has_dockerfile"], "Dockerfile/compose"),
+            (signals["has_ci"], "CI pipeline"),
+            (signals["has_env_example"], ".env.example"),
+        )
+        if not ok
+    ]
+    dim(
+        "ops",
+        "Ops readiness",
+        ops_pts,
+        10,
+        "present: container/CI/env-contract markers"
+        if not ops_missing
+        else f"missing: {', '.join(ops_missing)}",
+        "Add the missing ops markers so the repo deploys the same way " "everywhere.",
+    )
+
+    # 8. Docs contract (10) — README, API spec, architecture docs.
+    docs_pts = (
+        (4 if signals["has_readme"] else 0)
+        + (3 if signals["has_openapi"] else 0)
+        + (3 if signals["has_docs"] else 0)
+    )
+    docs_missing = [
+        n
+        for ok, n in (
+            (signals["has_readme"], "README"),
+            (signals["has_openapi"], "OpenAPI spec"),
+            (signals["has_docs"], "architecture docs"),
+        )
+        if not ok
+    ]
+    dim(
+        "docs_contract",
+        "Docs & API contract",
+        docs_pts,
+        10,
+        "README + API spec + architecture docs present"
+        if not docs_missing
+        else f"missing: {', '.join(docs_missing)}",
+        "Document the API contract and architecture so agents and reviewers "
+        "share ground truth.",
+    )
+
+    total_pts = sum(d["points"] for d in dims)
+    label = (
+        "production-ready signals"
+        if total_pts >= 80
+        else "near production-ready"
+        if total_pts >= 65
+        else "at risk"
+        if total_pts >= 40
+        else "not production-ready"
+    )
+    top_fixes = [
+        f"{d['name']}: {d['fix']}"
+        for d in sorted(dims, key=lambda d: d["points"] - d["max"])
+        if d["max"] - d["points"] > 0 and d["fix"]
+    ][:5]
+    return {
+        "score": total_pts,
+        "max": 100,
+        "label": label,
+        "dimensions": dims,
+        "top_fixes": top_fixes,
+        "disclaimer": (
+            "Static, deterministic signals only — same repo, same score. "
+            "Not a substitute for code review, load testing, or a security "
+            "audit."
+        ),
+        "more": READINESS_MORE_URL,
+    }
+
+
 # ── output rendering ─────────────────────────────────────────────────────────
 
 FOOTER = (
@@ -692,6 +1027,96 @@ def mermaid_er(entities: list[Entity], cap: int = 20) -> str:
                 lines.append(f"  {e.name} }}o--|| {tgt} : refs")
     lines.append("```")
     return "\n".join(lines)
+
+
+def mermaid_route_map(routes: list[dict], cap: int = 16) -> str:
+    """Client → route-prefix flowchart: the repo's HTTP surface at a glance."""
+    groups: dict[str, int] = defaultdict(int)
+    for r in routes:
+        path = r["path"]
+        if not path.startswith("/"):
+            continue
+        seg = path.split("/")[1] if len(path) > 1 else ""
+        if seg == "api" and path.count("/") >= 2:
+            seg = "api/" + path.split("/")[2]
+        groups["/" + seg if seg else "/"] += 1
+    keep = sorted(groups, key=groups.get, reverse=True)[:cap]
+    lines = ["```mermaid", "graph LR", "  C([Client])"]
+    for i, g in enumerate(sorted(keep)):
+        lines.append(f'  R{i}["{g} ({groups[g]} routes)"]')
+        lines.append(f"  C --> R{i}")
+    lines.append("```")
+    return "\n".join(lines)
+
+
+def _unfence(mermaid_block: str) -> str:
+    """Strip the ```mermaid fences so the source saves as a clean .mmd file."""
+    lines = [
+        ln for ln in mermaid_block.splitlines() if not ln.strip().startswith("```")
+    ]
+    return "\n".join(lines).strip() + "\n"
+
+
+_DIAGRAM_HTML = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Architecture diagrams — {repo}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body {{ font: 15px/1.5 system-ui, sans-serif; margin: 2rem auto; max-width: 60rem; padding: 0 1rem; color: #1f2933; }}
+  h1 {{ font-size: 1.4rem; }} h2 {{ font-size: 1.1rem; margin-top: 2.5rem; }}
+  .note {{ color: #52606d; font-size: .85rem; }}
+  footer {{ margin-top: 3rem; border-top: 1px solid #e4e7eb; padding-top: 1rem; font-size: .85rem; color: #52606d; }}
+  pre.mermaid {{ background: #fff; }}
+</style>
+</head>
+<body>
+<h1>Architecture diagrams — {repo}</h1>
+<p class="note">Deterministically extracted by Archiet X-Ray v{version}. Rendering uses the
+Mermaid library from a CDN; the <code>.mmd</code> sources beside this file are
+the offline ground truth and work in any Mermaid-aware tool (GitHub, GitLab,
+VS Code, Obsidian).</p>
+<h2>Module dependencies</h2>
+<pre class="mermaid">{modules}</pre>
+<h2>Domain model (ER)</h2>
+<pre class="mermaid">{er}</pre>
+<h2>HTTP surface</h2>
+<pre class="mermaid">{routes}</pre>
+<footer>Generated by <a href="https://archiet.com/xray?utm_source=xray-diagrams">Archiet X-Ray</a> —
+deterministic architecture extraction, no LLM guesses. Want consulting-grade
+architecture deliverables (C4, ADRs, compliance matrices) generated from a
+spec? <a href="https://archiet.com/?utm_source=xray-diagrams">archiet.com</a></footer>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({{ startOnLoad: true, securityLevel: "strict" }});
+</script>
+</body>
+</html>
+"""
+
+
+def diagram_pack(model: dict) -> dict[str, str]:
+    """filename → content for the exportable diagram pack.
+
+    Three Mermaid sources (offline ground truth) plus one self-describing HTML
+    viewer. Deterministic — derived purely from the extracted model.
+    """
+    modules = _unfence(model["mermaid_modules"])
+    er = _unfence(model["mermaid_er"])
+    routes = _unfence(model["mermaid_routes"])
+    return {
+        "modules.mmd": modules,
+        "er.mmd": er,
+        "routes.mmd": routes,
+        "diagrams.html": _DIAGRAM_HTML.format(
+            repo=model["repo"],
+            version=XRAY_VERSION,
+            modules=modules,
+            er=er,
+            routes=routes,
+        ),
+    }
 
 
 def render_architecture_md(model: dict) -> str:
@@ -747,6 +1172,25 @@ def render_architecture_md(model: dict) -> str:
         ]
     else:
         out.append("_No boundary findings from the deterministic rule set._")
+    r = model.get("readiness")
+    if r:
+        out += [
+            "",
+            "## Production-readiness signals",
+            "",
+            f"**{r['score']}/100 — {r['label']}**",
+            "",
+            "| Dimension | Score | Evidence |",
+            "|---|---|---|",
+        ]
+        out += [
+            f"| {d['name']} | {d['points']}/{d['max']} | {d['evidence']} |"
+            for d in r["dimensions"]
+        ]
+        if r["top_fixes"]:
+            out += ["", "**Top fixes:**", ""]
+            out += [f"1. {fx}" for fx in r["top_fixes"]]
+        out += ["", f"_{r['disclaimer']}_"]
     out.append(FOOTER.format(v=XRAY_VERSION))
     return "\n".join(out)
 
@@ -878,6 +1322,14 @@ def xray(root: Path) -> dict:
         for m, n in sorted(seg2_in.items(), key=lambda kv: -kv[1])
     ]
 
+    test_files = sum(
+        1
+        for p in files
+        if TEST_PATH_RE.search(str(p.relative_to(root)).replace("\\", "/"))
+        or p.name.startswith("test_")
+        or ".test." in p.name
+        or ".spec." in p.name
+    )
     stats = {
         "code_files": len(files),
         "parsed_files": len(parsed),
@@ -886,6 +1338,7 @@ def xray(root: Path) -> dict:
         "routes": len(routes),
         "entities": len(entities),
         "tasks": len(tasks),
+        "test_files": test_files,
         "graph_edges": len(edges),
     }
     model = {
@@ -909,17 +1362,13 @@ def xray(root: Path) -> dict:
     }
     model["mermaid_modules"] = mermaid_module_graph(edges)
     model["mermaid_er"] = mermaid_er(entities)
+    model["mermaid_routes"] = mermaid_route_map(model["routes"])
+    model["signals"] = repo_signals(root)
+    model["readiness"] = production_readiness(model, model["signals"])
     return model
 
 
 def main(argv: list[str] | None = None) -> int:
-    if argv is None:
-        argv = sys.argv[1:]
-    if argv and argv[0] == "mcp":
-        # `archiet-xray mcp [repo]` — run the MCP server over stdio
-        import mcp_server
-
-        return mcp_server.main(argv[1:])
     ap = argparse.ArgumentParser(
         description="Archiet X-Ray — extract the real architecture of a repo."
     )
@@ -948,6 +1397,10 @@ def main(argv: list[str] | None = None) -> int:
     (out_dir / "AGENT_CONTEXT.md").write_text(
         render_agent_context(model), encoding="utf-8"
     )
+    diagrams_dir = out_dir / "diagrams"
+    diagrams_dir.mkdir(exist_ok=True)
+    for fname, content in diagram_pack(model).items():
+        (diagrams_dir / fname).write_text(content, encoding="utf-8")
 
     if args.json:
         print(json.dumps(model, indent=2))
@@ -955,6 +1408,10 @@ def main(argv: list[str] | None = None) -> int:
         s = model["stats"]
         print(f"Archiet X-Ray v{XRAY_VERSION} — {model['repo']}")
         print(f"  visibility score : {model['score']}/100")
+        print(
+            f"  prod readiness   : {model['readiness']['score']}/100 "
+            f"({model['readiness']['label']})"
+        )
         print(
             f"  code files       : {s['code_files']} "
             f"({s['parsed_files']} read, {s['mapped_files']} with elements)"
@@ -966,6 +1423,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  wrote            : {out_dir / 'ARCHITECTURE.md'}")
         print(f"                     {out_dir / 'AGENT_CONTEXT.md'}")
         print(f"                     {out_dir / 'architecture.json'}")
+        print(f"                     {diagrams_dir / 'diagrams.html'} (+3 .mmd)")
     return 0
 
 

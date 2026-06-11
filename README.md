@@ -1,7 +1,5 @@
 # Archiet X-Ray
 
-![archiet-xray demo — scan a repo, get the map, give it to your agent](demo.gif)
-
 **See what your AI sees.** Your codebase is too big for any AI agent's context
 window. The agent reads 40 files out of 4,000, makes a change, and you have no
 way to know whether it respected the architecture — or quietly violated it.
@@ -13,9 +11,10 @@ interactive map) and **your AI agent** (an MCP server + context pack).
 ```
 $ python xray.py .
 
-Archiet X-Ray v0.1.0 — your-repo
+Archiet X-Ray v0.2.0 — your-repo
   visibility score : 78/100
-  code files       : 3,412 (1,907 mapped)
+  prod readiness   : 71/100 (near production-ready)
+  code files       : 3,412 (1,907 read, 1,584 with elements)
   routes           : 214
   entities         : 87
   async tasks      : 31
@@ -23,26 +22,54 @@ Archiet X-Ray v0.1.0 — your-repo
   wrote            : .archiet/ARCHITECTURE.md
                      .archiet/AGENT_CONTEXT.md
                      .archiet/architecture.json
+                     .archiet/diagrams/diagrams.html (+3 .mmd)
 ```
 
 ## What you get
 
 | File | What it is |
 |---|---|
-| `ARCHITECTURE.md` | Human-readable map: module dependency graph (Mermaid), domain model, every route with auth status, dependency hotspots, risk findings |
+| `ARCHITECTURE.md` | Human-readable map: module dependency graph (Mermaid), domain model, every route with auth status, dependency hotspots, risk findings, production-readiness scorecard |
 | `AGENT_CONTEXT.md` | Drop into your CLAUDE.md / rules file — makes Claude Code, Cursor, and Windsurf respect your architecture *today* |
 | `architecture.json` | The machine-readable model (the "repo genome") |
+| `diagrams/` | Architecture diagrams as Mermaid sources + a self-contained HTML viewer — module dependency graph, ER / domain-model diagram, HTTP route map |
+
+## Production-readiness score (new in 0.2)
+
+A deterministic **0–100 production-readiness score** over 8 dimensions:
+route auth coverage, secrets hygiene, client token storage, data-layer
+discipline, test footprint, migration discipline, ops readiness
+(Docker/CI/.env contract), and docs/API contract. Same repo always scores
+the same — so the score is comparable across commits, branches, and repos,
+and you can put it in CI.
+
+Each dimension reports its evidence ("142/214 statically-guarded routes
+carry an auth guard") and the report ends with the **top fixes ranked by
+points lost**. Dimensions that don't apply (a CLI tool has no routes) take
+half credit and say so — honesty over flattery.
+
+Useful when: reviewing AI-generated code before shipping it, auditing an
+inherited codebase, or tracking whether your repo is drifting away from
+production readiness over time.
+
+## Architecture diagrams from code (new in 0.2)
+
+`generate_diagrams` turns any repo into **Mermaid architecture diagrams**,
+deterministically extracted from the code itself:
+
+- **Module dependency graph** — the real import structure, not the wiki's
+- **ER / domain-model diagram** — entities and relations from SQLAlchemy,
+  Django, and Prisma models
+- **HTTP route map** — the API surface grouped by prefix
+
+You get the raw `.mmd` sources (paste into any README, wiki, GitHub, GitLab,
+Notion, Obsidian, or VS Code — they all render Mermaid natively) plus a
+self-contained `diagrams.html` viewer.
 
 ## Give it to your agent (MCP)
 
-Published to the [MCP Registry](https://registry.modelcontextprotocol.io) as
-`mcp-name: io.github.anioko/archiet-xray`.
-
 ```bash
-# Claude Code — from PyPI (recommended)
-claude mcp add archiet-xray -- uvx archiet-xray mcp /path/to/repo
-
-# Claude Code — from a local checkout
+# Claude Code
 claude mcp add archiet-xray -- python /path/to/mcp_server.py /path/to/repo
 ```
 
@@ -51,6 +78,8 @@ Your agent can now ask — *before* it edits:
 - **`blast_radius`** — "who depends on this file? what breaks if I touch it?"
 - **`arch_summary`** — "where do routes/entities/services actually live?"
 - **`boundary_findings`** — "hardcoded secrets, raw SQL, tokens in localStorage, unauthenticated routes"
+- **`production_readiness`** — "score this repo 0–100 for production readiness, with evidence and top fixes"
+- **`generate_diagrams`** — "draw the module graph / ER diagram / route map as Mermaid"
 - **`xray_scan`** — re-scan after structural changes
 
 ## Principles
@@ -104,9 +133,32 @@ at `include_router(dependencies=...)` level, which is invisible when analyzing
 the route function. X-Ray reports unknown rather than guessing a confident
 "no auth" — a wrong map is worse than no map.
 
+**Is the production-readiness score a security audit?**
+No. It is a deterministic static-signal score — it measures whether the repo
+*carries the marks* of production discipline (auth guards on routes, no
+hardcoded secrets, tests, migrations, ops + docs contracts). The payload says
+so explicitly. It is a fast, repeatable triage number, not a substitute for
+code review, load testing, or a security audit.
+
+**Why Mermaid for the diagrams instead of images?**
+Mermaid sources are diffable, render natively on GitHub/GitLab/Notion/VS
+Code/Obsidian, and stay in sync with the repo because you can regenerate them
+in one command. The bundled `diagrams.html` gives you a browser view without
+installing anything.
+
 **Does it phone home?**
 No. Stdlib-only, zero network calls, zero telemetry. The only outbound anything
 is a link in the generated footer.
+
+## Sibling server: archiet-audit
+
+X-Ray never touches the network. If you want the *hosted* counterpart — a
+procurement-grade architecture audit (traceability %, severity-ranked gaps,
+30/60/90-day roadmap) generated from your architecture documents — the
+[`archiet-audit` MCP server](../audit-mcp/) bridges your agent to
+[archiet.com/audit-my-architecture](https://archiet.com/audit-my-architecture).
+It is a separate server precisely so X-Ray's "your code never leaves your
+machine" guarantee stays absolute.
 
 ## Part of Archiet
 
