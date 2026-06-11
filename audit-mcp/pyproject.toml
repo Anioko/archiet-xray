@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "archiet-audit-mcp"
-version = "0.1.0"
+version = "0.1.2"
 description = "Architecture audit MCP server — submit architecture docs from any AI coding agent and get back a consulting-grade traceability audit at a shareable URL."
 readme = "README.md"
 requires-python = ">=3.10"

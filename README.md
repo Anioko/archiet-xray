@@ -1,5 +1,7 @@
 # Archiet X-Ray
 
+mcp-name: io.github.Anioko/archiet-xray
+
 **See what your AI sees.** Your codebase is too big for any AI agent's context
 window. The agent reads 40 files out of 4,000, makes a change, and you have no
 way to know whether it respected the architecture — or quietly violated it.

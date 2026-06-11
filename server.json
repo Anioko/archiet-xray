@@ -1,20 +1,19 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
-  "name": "io.github.anioko/archiet-xray",
-  "title": "Archiet X-Ray",
-  "description": "Deterministic architecture maps for any repo: blast radius, routes, entities, and risk findings.",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Anioko/archiet-xray",
+  "description": "Deterministic repo architecture maps: auth coverage, blast radius, readiness score, diagrams",
+  "version": "0.2.3",
+  "websiteUrl": "https://archiet.com/xray",
   "repository": {
     "url": "https://github.com/Anioko/archiet-xray",
     "source": "github"
   },
-  "version": "0.1.1",
-  "websiteUrl": "https://archiet.com",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "archiet-xray",
-      "version": "0.1.1",
+      "version": "0.2.3",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
@@ -30,7 +29,7 @@
         {
           "type": "positional",
           "valueHint": "repo_path",
-          "description": "Path to the repository to scan (default: current directory)",
+          "description": "Path to the repository to analyze (default: current directory)",
           "isRequired": false
         }
       ]
@@ -54,6 +53,14 @@
         {
           "name": "boundary_findings",
           "description": "Deterministic risk findings: hardcoded secrets, raw SQL bypassing the ORM, auth tokens in localStorage, routes without auth guards."
+        },
+        {
+          "name": "production_readiness",
+          "description": "Deterministic 0-100 production-readiness score across 8 dimensions with per-dimension evidence and top fixes."
+        },
+        {
+          "name": "generate_diagrams",
+          "description": "Mermaid module dependency graph, ER/domain-model diagram, and HTTP route map extracted from the code, plus an HTML viewer."
         }
       ]
     }

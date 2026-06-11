@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Anioko/archiet-audit",
+  "description": "Submit architecture docs, get a consulting-grade traceability audit at a shareable URL",
+  "version": "0.1.2",
+  "websiteUrl": "https://archiet.com/audit-my-architecture",
+  "repository": {
+    "url": "https://github.com/Anioko/archiet-xray",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "archiet-audit-mcp",
+      "version": "0.1.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ARCHIET_BASE_URL",
+          "description": "Override the Archiet instance base URL (defaults to https://archiet.com)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}

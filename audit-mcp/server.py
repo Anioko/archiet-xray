@@ -33,7 +33,7 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-SERVER_VERSION = "0.1.0"
+SERVER_VERSION = "0.1.2"
 PROTOCOL_VERSION = "2024-11-05"
 DEFAULT_BASE_URL = "https://archiet.com"
 API_PATH = "/api/audits/architecture"

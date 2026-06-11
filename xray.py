@@ -32,7 +32,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-XRAY_VERSION = "0.2.0"
+XRAY_VERSION = "0.2.3"
 
 # ── repo walking ─────────────────────────────────────────────────────────────
 
@@ -1369,6 +1369,14 @@ def xray(root: Path) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    args_in = sys.argv[1:] if argv is None else argv
+    if args_in and args_in[0] == "mcp":
+        # `archiet-xray mcp [repo_path]` — run the MCP server over stdio so
+        # registry clients can launch it from the single console script.
+        import mcp_server  # sibling module in the wheel; lazy to avoid cycle
+
+        sys.argv = [sys.argv[0], *args_in[1:]]
+        return mcp_server.main()
     ap = argparse.ArgumentParser(
         description="Archiet X-Ray — extract the real architecture of a repo."
     )

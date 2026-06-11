@@ -1,5 +1,7 @@
 # Archiet Audit MCP — architecture audit server for AI agents
 
+mcp-name: io.github.Anioko/archiet-audit
+
 **Get a procurement-grade architecture audit from inside your AI coding
 agent.** This MCP (Model Context Protocol) server lets Claude Code, Cursor,
 Windsurf — any MCP-capable agent — submit architecture documents (PDF, DOCX,
